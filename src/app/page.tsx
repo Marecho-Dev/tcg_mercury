@@ -1,9 +1,31 @@
 import Link from "next/link";
+import React, { useState } from "react";
+import CameraUploadButton from "./CameraUploadButton"; // Adjust the path as needed
 
 export default function HomePage() {
+  const [image, setImage] = useState(null);
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImage(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-      Hello Gallery
+      <h1>Hello Gallery</h1>
+      <CameraUploadButton onFileChange={handleFileChange} />
+      {image && (
+        <img
+          src={image}
+          alt="Uploaded"
+          style={{ width: "300px", height: "auto" }}
+        />
+      )}
     </main>
   );
 }
