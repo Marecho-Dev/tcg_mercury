@@ -1,12 +1,16 @@
 import React from "react";
-
-const CameraUploadButton = ({ onFileChange }) => {
+interface CameraUploadButtonProps {
+  onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}
+const CameraUploadButton: React.FC<CameraUploadButtonProps> = ({
+  onFileChange,
+}) => {
   return (
     <div>
       <input
         type="file"
         accept="image/*"
-        capture="camera"
+        capture="environment"
         onChange={onFileChange}
         style={{ display: "none" }}
         id="cameraInput"
