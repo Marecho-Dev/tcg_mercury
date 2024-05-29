@@ -1,6 +1,7 @@
 import Link from "next/link";
 import React, { useState } from "react";
 import CameraUploadButton from "./CameraUploadButton"; // Adjust the path as needed
+("use client"); // Add this line at the top
 
 export default function HomePage() {
   const [image, setImage] = useState(null);
