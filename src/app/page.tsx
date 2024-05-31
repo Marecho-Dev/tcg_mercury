@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { db } from "~/server/db";
 // import React, { useState } from "react";
 // import CameraUploadButton from "./CameraUploadButton"; // Adjust the path as needed
-
+export const dynamic = "force-dynamic";
 const mockUrls = [
   "https://utfs.io/f/4033f3b2-0fc9-4a6e-95be-37009f50e078-7qajqq.png",
   "https://utfs.io/f/93fe9634-fea2-4314-956b-7ae7f700ae5b-qa0vsq.png",
