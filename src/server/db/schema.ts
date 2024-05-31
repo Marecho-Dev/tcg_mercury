@@ -18,11 +18,16 @@ import {
  */
 export const createTable = pgTableCreator((name) => `tcg_mercury_${name}`);
 
-export const posts = createTable(
-  "post",
+export const cards = createTable(
+  "card",
   {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 256 }),
+    url: varchar("url", { length: 256 }).notNull(),
+    // rarity
+    // serial code set number basically
+    // condition
+    // edition
     createdAt: timestamp("created_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -30,5 +35,5 @@ export const posts = createTable(
   },
   (example) => ({
     nameIndex: index("name_idx").on(example.name),
-  })
+  }),
 );
