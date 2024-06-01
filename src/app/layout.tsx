@@ -1,7 +1,16 @@
 import "~/styles/globals.css";
+import "@uploadthing/react/styles.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { GeistSans } from "geist/font/sans";
+import { Inter } from "next/font/google";
 import { TopNav } from "./_components/topnav";
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
+import { extractRouterConfig } from "uploadthing/server";
+import { ourFileRouter } from "./api/uploadthing/core";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata = {
   title: "TCG Mercury",
@@ -16,7 +25,8 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${GeistSans.variable}`}>
+      <html lang="en" className={`${inter.variable}`}>
+        <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
         <body>
           <TopNav />
           {children}

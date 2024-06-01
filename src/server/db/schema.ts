@@ -24,10 +24,14 @@ export const cards = createTable(
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 256 }),
     url: varchar("url", { length: 256 }).notNull(),
+    userId: varchar("userId", { length: 256 }).notNull(),
+    // userId: varchar("userId", { length: 256 }).notNull,
     // rarity
     // serial code set number basically
     // condition
     // edition
+    // game (pokemon, magic, onepiece, yugioh)
+    // Error Detection (red box around problem areas like scuffed edges, scratches, etc)
     createdAt: timestamp("created_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
