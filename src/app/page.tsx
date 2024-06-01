@@ -1,42 +1,42 @@
-import { db } from "~/server/db";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { getMyCards } from "~/server/queries";
+import Image from "next/image";
+import Link from "next/link";
 // import React, { useState } from "react";
 // import CameraUploadButton from "./CameraUploadButton"; // Adjust the path as needed
 export const dynamic = "force-dynamic";
-
-export default async function HomePage() {
+async function Cards() {
   const cards = await getMyCards();
-  //   // const [image, setImage] = useState<string | null>(null);
-
-  //   // const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   //   const file = event.target.files?.[0];
-  //   //   if (file) {
-  //   //     const reader = new FileReader();
-  //   //     reader.onload = (e) => {
-  //   //       setImage(e.target?.result as string);
-  //   //     };
-  //   //     reader.readAsDataURL(file);
-  //   //   }
-  //   // };
-
+  return (
+    <div className="flex flex-wrap justify-center gap-4 p-4">
+      {cards.map((card) => (
+        <div key={card.id} className="flex h-48 w-48 flex-col">
+          <Link href={`/img/${card.id}`}>
+            <Image
+              src={card.url}
+              style={{ objectFit: "contain" }}
+              width={192}
+              height={192}
+              alt={card.url}
+            />
+          </Link>
+          <div>{card.name}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+export default async function HomePage() {
   return (
     <main className="">
-      <div className="flex flex-wrap gap-4">
-        {cards.map((card) => (
-          <div key={card.id} className="flex w-48 flex-col">
-            <img src={card.url} />
-            <div> {card.name}</div>
-          </div>
-        ))}
-      </div>
-      {/* <CameraUploadButton onFileChange={handleFileChange} />
-//       {image && (
-//         <img
-//           src={image}
-//           alt="Uploaded"
-//           style={{ width: "300px", height: "auto" }}
-//         />
-//       )} */}
+      <SignedOut>
+        <div className="h-full w-full text-center text-2xl">
+          Please sign in above
+        </div>
+      </SignedOut>
+      <SignedIn>
+        <Cards />
+      </SignedIn>
     </main>
   );
 }
