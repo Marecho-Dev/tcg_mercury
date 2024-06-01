@@ -1,12 +1,11 @@
 import { db } from "~/server/db";
+import { getMyCards } from "~/server/queries";
 // import React, { useState } from "react";
 // import CameraUploadButton from "./CameraUploadButton"; // Adjust the path as needed
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const cards = await db.query.cards.findMany({
-    orderBy: (model, { desc }) => desc(model.id),
-  });
+  const cards = await getMyCards();
   //   // const [image, setImage] = useState<string | null>(null);
 
   //   // const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
