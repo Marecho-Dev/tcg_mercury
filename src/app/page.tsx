@@ -2,6 +2,9 @@ import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { getMyCards } from "~/server/queries";
 import Image from "next/image";
 import Link from "next/link";
+import { UploadButton } from "../utils/uploadthing";
+import { CardDumper } from "./_components/carddumper";
+
 // import React, { useState } from "react";
 // import CameraUploadButton from "./CameraUploadButton"; // Adjust the path as needed
 export const dynamic = "force-dynamic";
@@ -35,7 +38,7 @@ export default async function HomePage() {
         </div>
       </SignedOut>
       <SignedIn>
-        <Cards />
+        <CardDumper />
       </SignedIn>
     </main>
   );
