@@ -3,11 +3,24 @@ import React, { useState } from "react";
 
 import { UploadButton } from "../../utils/uploadthing";
 import { useRouter } from "next/navigation";
+
+interface UploadResponse {
+  customId: string | null;
+  key: string;
+  name: string;
+  serverData: {
+    uploadedBy: string;
+  };
+  size: number;
+  type: string;
+  url: string;
+}
+
 export function CardDumper() {
   const router = useRouter();
-  const [images, setImages] = useState([]);
+  const [images, setImages] = useState<UploadResponse[]>([]);
 
-  const handleUploadComplete = (res) => {
+  const handleUploadComplete = (res: UploadResponse[]) => {
     console.log(res);
     setImages(res);
     router.refresh();
