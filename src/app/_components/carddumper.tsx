@@ -3,7 +3,8 @@ import React, { useState } from "react";
 
 import { UploadButton } from "../../utils/uploadthing";
 import { useRouter } from "next/navigation";
-
+import Image from "next/image";
+import Link from "next/link";
 interface UploadResponse {
   customId: string | null;
   key: string;
@@ -37,10 +38,12 @@ export function CardDumper() {
             <h3 className="bg-gray-800 p-2 text-center text-lg font-bold text-white">
               Front
             </h3>
-            <img
-              src={images[0].url}
-              alt={images[0].name}
-              className="h-48 w-full object-cover"
+            <Image
+              src={images[0]?.url ?? "path/to/default/image.jpg"}
+              style={{ objectFit: "contain" }}
+              width={192}
+              height={192}
+              alt={images[0]?.name ?? "Default Image"}
             />
           </div>
           {images.length > 1 && (
@@ -48,10 +51,12 @@ export function CardDumper() {
               <h3 className="bg-gray-800 p-2 text-center text-lg font-bold text-white">
                 Back
               </h3>
-              <img
-                src={images[1].url}
-                alt={images[1].name}
-                className="h-48 w-full object-cover"
+              <Image
+                src={images[1]?.url ?? "path/to/default/image.jpg"}
+                style={{ objectFit: "contain" }}
+                width={192}
+                height={192}
+                alt={images[1]?.name ?? "Default Image"}
               />
             </div>
           )}
