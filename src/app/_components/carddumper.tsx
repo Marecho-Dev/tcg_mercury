@@ -23,7 +23,11 @@ export function CardDumper() {
 
   const handleUploadComplete = (res: UploadResponse[]) => {
     console.log(res);
-    setImages(res);
+    if (images.length === 1 && res.length === 1) {
+      setImages([...images, ...res]); // Append new image to existing one
+    } else {
+      setImages(res); // Replace images with new image(s)
+    }
     router.refresh();
   };
   return (
