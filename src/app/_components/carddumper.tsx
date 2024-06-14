@@ -16,7 +16,10 @@ interface UploadResponse {
   type: string;
   url: string;
 }
-
+// things to update
+// I want to have user confirm photos before the get uploaded to uploadthing hosting. This will make the lag less and make it so they can queue the uplaods without
+//slowing down the photo process
+// this will also allow me to create a card entry first so i can have the image attached to the card id and prevent any accidentl uploads
 export function CardDumper() {
   const router = useRouter();
   const [images, setImages] = useState<UploadResponse[]>([]);
