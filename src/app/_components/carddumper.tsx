@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { uploadFiles } from "../../utils/uploadthing";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -17,6 +17,7 @@ interface UploadResponse {
 }
 
 export function CardDumper() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [tempImages, setTempImages] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -37,6 +38,9 @@ export function CardDumper() {
       });
       setTempImages([]);
       setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       router.refresh();
     } catch (error) {
       setIsUploading(false);
@@ -50,7 +54,12 @@ export function CardDumper() {
 
   return (
     <div className="flex flex-col items-center justify-center p-5">
-      <input type="file" multiple onChange={handleFileChange} />
+      <input
+        type="file"
+        multiple
+        onChange={handleFileChange}
+        ref={fileInputRef}
+      />
       {tempImages.length > 0 && (
         <div className="mt-4 flex flex-row items-center justify-center gap-4">
           {tempImages.map((file, index) => (
