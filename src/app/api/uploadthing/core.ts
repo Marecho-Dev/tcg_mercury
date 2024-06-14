@@ -24,15 +24,20 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload
       console.log("Upload complete for userId:", metadata.userId);
-      await db.insert(cards).values({
-        name: file.name,
-        url: file.url,
-        userId: metadata.userId,
-      });
-      console.log("file url", file.url);
+      const insertedCard = await db
+        .insert(cards)
+        .values({
+          name: file.name,
+          url: file.url,
+          userId: metadata.userId,
+        })
+        .returning({ id: cards.id });
 
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
-      return { uploadedBy: metadata.userId };
+      return {
+        uploadedBy: metadata.userId,
+        pictureId: insertedCard?.[0]?.id ?? null,
+      };
     }),
 } satisfies FileRouter;
 

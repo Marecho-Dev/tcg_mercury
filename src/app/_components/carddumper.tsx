@@ -41,6 +41,7 @@ export function CardDumper() {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+      console.log(res);
       router.refresh();
     } catch (error) {
       setIsUploading(false);
