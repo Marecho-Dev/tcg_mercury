@@ -4,18 +4,6 @@ import { uploadFiles } from "../../utils/uploadthing";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-interface UploadResponse {
-  customId: string | null;
-  key: string;
-  name: string;
-  serverData: {
-    uploadedBy: string;
-  };
-  size: number;
-  type: string;
-  url: string;
-}
-
 interface CardDetails {
   id: number;
   // Add other expected properties here

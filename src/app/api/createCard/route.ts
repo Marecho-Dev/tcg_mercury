@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     // Assuming createCard does not require any data from the request body
     const card = await createCard();
     return NextResponse.json(card, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating card:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
