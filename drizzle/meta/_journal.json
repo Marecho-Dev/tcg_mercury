@@ -1,0 +1,13 @@
+{
+  "version": "6",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1718440452202,
+      "tag": "0000_pink_the_enforcers",
+      "breakpoints": true
+    }
+  ]
+}

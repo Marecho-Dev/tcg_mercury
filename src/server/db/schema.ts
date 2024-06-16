@@ -1,6 +1,3 @@
-// Example model schema from the Drizzle docs
-// https://orm.drizzle.team/docs/sql-schema-declaration
-
 import { sql } from "drizzle-orm";
 import {
   index,
@@ -8,36 +5,50 @@ import {
   serial,
   timestamp,
   varchar,
+  doublePrecision,
+  integer,
 } from "drizzle-orm/pg-core";
 
-/**
- * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
- * database instance for multiple projects.
- *
- * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
- */
 export const createTable = pgTableCreator((name) => `tcg_mercury_${name}`);
+
+export const images = createTable(
+  "image",
+  {
+    id: serial("id").primaryKey(),
+    cardId: integer("cardId"),
+    name: varchar("name", { length: 256 }),
+    url: varchar("url", { length: 256 }).notNull(),
+    userId: varchar("userId", { length: 256 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updatedAt", { withTimezone: true }),
+  },
+  (picture) => ({
+    cardIdIndex: index("cardId_idx").on(picture.cardId),
+  }),
+);
 
 export const cards = createTable(
   "card",
   {
     id: serial("id").primaryKey(),
+    picture1Url: varchar("picture1Url", { length: 256 }),
+    picture2Url: varchar("picture2Url", { length: 256 }),
     name: varchar("name", { length: 256 }),
-    url: varchar("url", { length: 256 }).notNull(),
+    rarity: varchar("rarity", { length: 256 }),
+    condition: varchar("condition", { length: 256 }),
+    set: varchar("set", { length: 256 }),
+    edition: varchar("edition", { length: 256 }),
+    ebayPrice: doublePrecision("ebayPrice"),
+    tcgPlayerPrice: doublePrecision("tcgPlayerPrice"),
     userId: varchar("userId", { length: 256 }).notNull(),
-    // userId: varchar("userId", { length: 256 }).notNull,
-    // rarity
-    // serial code set number basically
-    // condition
-    // edition
-    // game (pokemon, magic, onepiece, yugioh)
-    // Error Detection (red box around problem areas like scuffed edges, scratches, etc)
     createdAt: timestamp("created_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     updatedAt: timestamp("updatedAt", { withTimezone: true }),
   },
-  (example) => ({
-    nameIndex: index("name_idx").on(example.name),
+  (card) => ({
+    nameIndex: index("name_idx").on(card.name),
   }),
 );

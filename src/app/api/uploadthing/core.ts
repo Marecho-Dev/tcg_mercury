@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { db } from "~/server/db";
-import { cards } from "~/server/db/schema";
+import { images, cards } from "~/server/db/schema";
 
 const f = createUploadthing();
 
@@ -24,19 +24,21 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload
       console.log("Upload complete for userId:", metadata.userId);
-      const insertedCard = await db
-        .insert(cards)
+
+      const insertedImages = await db
+        .insert(images)
         .values({
           name: file.name,
           url: file.url,
           userId: metadata.userId,
         })
-        .returning({ id: cards.id });
+        .returning({ id: images.id, url: images.url });
 
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
       return {
         uploadedBy: metadata.userId,
-        pictureId: insertedCard?.[0]?.id ?? null,
+        pictureId: insertedImages?.[0]?.id ?? null,
+        pictureUrl: insertedImages?.[0]?.url ?? null,
       };
     }),
 } satisfies FileRouter;

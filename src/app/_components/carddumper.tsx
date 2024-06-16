@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { uploadFiles } from "../../utils/uploadthing";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -16,11 +16,27 @@ interface UploadResponse {
   url: string;
 }
 
+interface CardDetails {
+  id: number;
+  // Add other expected properties here
+  url?: string; // Using optional if not all cards have a URL
+  status?: string; // Optional if not all cards have a status
+}
+
 export function CardDumper() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
   const [tempImages, setTempImages] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [cardData, setCardData] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (cardData) {
+      console.log("Updated cardData:", cardData);
+      // Perform any other actions that depend on the updated cardData value
+    }
+  }, [cardData]);
+
+  const router = useRouter();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -31,11 +47,95 @@ export function CardDumper() {
 
   const handleConfirmUpload = async () => {
     setIsUploading(true);
+
     try {
+      // Create the card first
+      console.log(
+        "Requesting URL:",
+        window.location.origin + "/api/createCard",
+      );
+      const createdCardResponse = await fetch("/api/createCard", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", // Ensure correct content type
+        },
+      });
+
+      if (!createdCardResponse.ok) {
+        throw new Error(`HTTP error! Status: ${createdCardResponse.status}`);
+      }
+
+      const data = (await createdCardResponse.json()) as CardDetails[];
+      console.log(data);
+      setCardData(data[0]!.id);
+      console.log("testing");
+      console.log(createdCardResponse);
+      console.log("calling CardId");
+      console.log(cardData);
+
+      // Upload the images associated with the created card
       const res = await uploadFiles("imageUploader", {
         files: tempImages,
-        // input: {}, // Add any necessary input data here
+        // input: { cardId }, // Pass the cardId as input data to the uploadFiles function
       });
+      console.log("upload files finished calling");
+      console.log(res);
+      const updatedImageIds = res
+        .map((item) => item.serverData.pictureId)
+        .filter((id): id is number => id !== null); // Filter out null values
+      const updatedImageUrls = res
+        .map((item) => item.serverData.pictureUrl) // Access the pictureUrl from each item
+        .filter((url): url is string => url !== null && url !== undefined); // Filter out null or undefined URLs
+
+      console.log("whatever this is");
+      console.log(updatedImageIds);
+      console.log(updatedImageUrls);
+      // console.log(data[0].id);
+      console.log("end whathever this is");
+
+      const updateImageResponse = await fetch("/api/updateImage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", // Ensure correct content type
+        },
+        body: JSON.stringify({
+          imageIds: updatedImageIds,
+          cardId: data[0]!.id,
+        }),
+      });
+
+      if (!createdCardResponse.ok) {
+        throw new Error(`HTTP error! Status: ${updateImageResponse.status}`);
+      }
+
+      // if (!updateSuccess) {
+      //   throw new Error("Failed to update images with cardId");
+      // }
+      //updatedImageIds contains the updatedImagesIds [37, 38] you can make it so a new updateCardImages calls for
+      console.log("updateImageResponse");
+      console.log(updateImageResponse);
+      console.log("--------------------------");
+
+      const updateCardImages = await fetch("/api/updateCardImages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", // Ensure correct content type
+        },
+        body: JSON.stringify({
+          cardId: data[0]!.id,
+          picture1Url: updatedImageUrls[0],
+          picture2Url: updatedImageUrls[1],
+        }),
+      });
+
+      if (!createdCardResponse.ok) {
+        throw new Error(`HTTP error! Status: ${updateImageResponse.status}`);
+      }
+
+      console.log("updatedCardImages");
+      console.log(updateCardImages);
+      console.log("--------------------------");
+
       setTempImages([]);
       setIsUploading(false);
       if (fileInputRef.current) {

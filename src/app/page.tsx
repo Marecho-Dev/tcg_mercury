@@ -1,5 +1,5 @@
 import { SignedIn, SignedOut } from "@clerk/nextjs";
-import { getMyCards } from "~/server/queries";
+import { getMyImages } from "~/server/queries";
 import Image from "next/image";
 import Link from "next/link";
 import { UploadButton } from "../utils/uploadthing";
@@ -8,22 +8,22 @@ import { CardDumper } from "./_components/carddumper";
 // import React, { useState } from "react";
 // import CameraUploadButton from "./CameraUploadButton"; // Adjust the path as needed
 export const dynamic = "force-dynamic";
-async function Cards() {
-  const cards = await getMyCards();
+async function Images() {
+  const images = await getMyImages();
   return (
     <div className="flex flex-wrap justify-center gap-4 p-4">
-      {cards.map((card) => (
-        <div key={card.id} className="flex h-48 w-48 flex-col">
-          <Link href={`/img/${card.id}`}>
+      {images.map((image) => (
+        <div key={image.id} className="flex h-48 w-48 flex-col">
+          <Link href={`/img/${image.id}`}>
             <Image
-              src={card.url}
+              src={image.url}
               style={{ objectFit: "contain" }}
               width={192}
               height={192}
-              alt={card.url}
+              alt={image.url}
             />
           </Link>
-          <div>{card.name}</div>
+          <div>{image.name}</div>
         </div>
       ))}
     </div>
