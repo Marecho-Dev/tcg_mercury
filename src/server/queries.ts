@@ -40,6 +40,7 @@ export async function updateImage(imageIds: number[], cardId: number) {
 
   return updatedImages; // Return the first (and presumably only) result
 }
+
 export async function updateCardImages(
   cardId: number,
   picture1Url: string,
@@ -65,4 +66,16 @@ export async function updateCardImages(
     }); // Return updated fields
 
   return updatedImages; // Return the updated card details
+}
+
+export async function getMyCards() {
+  const user = auth();
+
+  if (!user.userId) throw new Error("Unauthorized");
+
+  const cards = await db.query.cards.findMany({
+    where: (model, { eq }) => eq(model.userId, user.userId),
+    orderBy: (model, { desc }) => desc(model.id),
+  });
+  return cards;
 }
