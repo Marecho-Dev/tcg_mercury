@@ -1,12 +1,21 @@
 "use client";
-
+import { Checkbox } from "../../components/ui/checkbox";
+import { useState } from "react";
 import {
-  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 
+import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { Button } from "../../components/ui/button";
 import {
   Table,
   TableBody,
@@ -30,6 +39,7 @@ export function DataTable<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+  const [rowSelection, setRowSelection] = useState({});
 
   return (
     <div className="rounded-md border">
