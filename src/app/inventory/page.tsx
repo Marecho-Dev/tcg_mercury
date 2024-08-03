@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { Cards, columns } from "./columns";
+import React from "react";
+import type { Cards } from "./columns";
+import { columns } from "./columns";
 import { DataTable } from "./data-table";
 import { getMyCards } from "~/server/queries";
-import { Button, button } from "../../components/ui/button";
-import { CardAnalyzer } from "../_components/cardAnalyzer";
+import { Button } from "../../components/ui/button";
 async function getData(): Promise<Cards[]> {
   const getCards = await getMyCards();
   console.log(getCards);

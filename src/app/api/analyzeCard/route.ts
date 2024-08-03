@@ -1,71 +1,64 @@
 // src/app/api/analyzeCard/route.ts
 
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { generateChatResponse } from "../../../server/gptquery";
-import sharp from "sharp";
-import fs from "fs/promises";
-import fs1 from "fs";
-import axios from "axios";
+import { NextResponse } from "next/server";
 
-type ResponseData = {
-  message: string | null;
-  imageUrl: string | null;
-};
-
-// Function to fetch an image and convert it to base64
-const imageUrlToBase64 = async (url: string): Promise<string> => {
-  try {
-    const response = await axios.get(url, {
-      responseType: "arraybuffer", // Important to handle binary data
-    });
-
-    // Convert the array buffer to a Buffer and then to base64
-    const base64 = Buffer.from(response.data, "binary").toString("base64");
-
-    return `data:${response.headers["content-type"]};base64,${base64}`;
-  } catch (error) {
-    console.error("Error converting image to base64:", error);
-    return "";
-  }
-};
+interface CardInfo {
+  name: string;
+  set: string;
+  rarity: string;
+  condition: "NM" | "LP" | "MP" | "HP";
+  firstEdition: boolean;
+  imageUrl: string;
+}
 
 export async function GET(req: NextRequest, res: NextResponse) {
   console.log("Handler start");
   try {
     // const imageUrl =
-    //   "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg";
+    //   "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madisonthe-nature-boardwalk.jpg";
     const imageUrl =
-      "https://i.etsystatic.com/31888998/r/il/77f7ae/3425250783/il_570xN.3425250783_ghh9.jpg";
-    const detail = "high";
-    const base64 = await imageUrlToBase64(imageUrl).then((base64) => {
-      console.log(base64);
-    });
+      "https://utfs.io/f/d699cdaa-2a30-4e4a-8545-26b228cdd22b-lmien9.jpg";
 
     const response = await generateChatResponse([
       {
         role: "user",
         content: [
           {
-            type: "text",
-            text: "What is the name of this yugioh card? and can you give me the url i passed in again",
-          },
-          {
             type: "image_url",
             image_url: {
               url: imageUrl,
-              detail: detail,
+              detail: "high",
             },
+          },
+          {
+            type: "text",
+            text: `Analyze this Yu-Gi-Oh card image and provide the following information in a valid JSON format:
+
+{
+  "name": "",
+  "set": "",
+  "rarity": "",
+  "condition": "",
+  "firstEdition": 
+}
+
+Please note:
+1. For name, set, and rarity, be careful to distinguish between similar-looking characters (like I and L). Use your best judgment to correct any text that might be unclear due to surface damage.
+2. For condition, use only these categories: "NM" (Near Mint), "LP" (Lightly Played), "MP" (Moderately Played), or "HP" (Heavily Played).
+3. For firstEdition, use a boolean value (true or false).
+
+Ensure the JSON is properly formatted and can be parsed by JavaScript's JSON.parse() function.`,
           },
         ],
       },
     ]);
     console.log("Response from OpenAI:", response);
+
     const parsedResponse = parseResponse(response!);
 
-    return NextResponse.json(
-      { message: parsedResponse.text, imageUrl: parsedResponse.imageUrl },
-      { status: 200 },
-    );
+    return NextResponse.json(parsedResponse, { status: 200 });
   } catch (error) {
     console.error("Error during API call:", error);
     return NextResponse.json(
@@ -75,25 +68,21 @@ export async function GET(req: NextRequest, res: NextResponse) {
   }
 }
 
-function parseResponse(response: string | undefined): {
-  text: string | null;
-  imageUrl: string | null;
-} {
+function parseResponse(response: string | undefined): CardInfo | null {
   if (!response) {
-    return { text: null, imageUrl: null };
+    return null;
   }
 
-  const lines = response.split("\n");
-  let text = "";
-  let imageUrl = null;
-
-  for (const line of lines) {
-    if (line.startsWith("data:image/")) {
-      imageUrl = line;
-    } else {
-      text += line + "\n";
+  try {
+    // Find the JSON object in the response
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const jsonString = jsonMatch[0];
+      return JSON.parse(jsonString) as CardInfo;
     }
+  } catch (error) {
+    console.error("Error parsing JSON:", error);
   }
 
-  return { text: text.trim(), imageUrl };
+  return null;
 }
