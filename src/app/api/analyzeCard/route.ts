@@ -13,7 +13,7 @@ interface CardInfo {
   imageUrl: string;
 }
 
-export async function GET(req: NextRequest, res: NextResponse) {
+export async function GET(_req: NextRequest, _res: NextResponse) {
   console.log("Handler start");
   try {
     // const imageUrl =
