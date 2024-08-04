@@ -3,8 +3,10 @@
 import type { NextRequest } from "next/server";
 import { generateChatResponse } from "../../../server/gptquery";
 import { NextResponse } from "next/server";
+import { updateCard } from "~/server/queries";
 
 interface CardInfo {
+  id: number;
   name: string;
   set: string;
   rarity: string;
@@ -13,28 +15,59 @@ interface CardInfo {
   imageUrl: string;
 }
 
-export async function GET(_req: NextRequest, _res: NextResponse) {
-  console.log("Handler start");
-  try {
-    // const imageUrl =
-    //   "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madisonthe-nature-boardwalk.jpg";
-    const imageUrl =
-      "https://utfs.io/f/d699cdaa-2a30-4e4a-8545-26b228cdd22b-lmien9.jpg";
+interface SelectedRow {
+  id: number;
+  picture1Url: string;
+  picture2Url: string;
+  name: string | null;
+  rarity: string | null;
+  // Add other properties as needed
+}
 
-    const response = await generateChatResponse([
-      {
-        role: "user",
-        content: [
+interface AnalyzeCardRequest {
+  selectedRows: SelectedRow[];
+}
+export async function POST(_req: NextRequest, _res: NextResponse) {
+  console.log("Handler start");
+
+  try {
+    const body = (await _req.json()) as AnalyzeCardRequest;
+    console.log("Received data:", body);
+
+    // Extract selectedRows from the body object
+    const { selectedRows } = body;
+
+    if (!Array.isArray(selectedRows)) {
+      console.error("selectedRows is not an array:", selectedRows);
+      return NextResponse.json(
+        { error: "Invalid data format. Expected an array of selected rows." },
+        { status: 400 },
+      );
+    }
+    console.log(selectedRows);
+
+    const results = await Promise.all(
+      selectedRows.map(async (row) => {
+        const imageUrl = row.picture1Url; // You can choose which picture to use
+        // const imageUrl =
+        //   "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madisonthe-nature-boardwalk.jpg";
+        // const imageUrl =
+        //   "https://utfs.io/f/d699cdaa-2a30-4e4a-8545-26b228cdd22b-lmien9.jpg";
+
+        const response = await generateChatResponse([
           {
-            type: "image_url",
-            image_url: {
-              url: imageUrl,
-              detail: "high",
-            },
-          },
-          {
-            type: "text",
-            text: `Analyze this Yu-Gi-Oh card image and provide the following information in a valid JSON format:
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: imageUrl,
+                  detail: "high",
+                },
+              },
+              {
+                type: "text",
+                text: `Analyze this Yu-Gi-Oh card image and provide the following information in a valid JSON format:
 
 {
   "name": "",
@@ -50,15 +83,34 @@ Please note:
 3. For firstEdition, use a boolean value (true or false).
 
 Ensure the JSON is properly formatted and can be parsed by JavaScript's JSON.parse() function.`,
+              },
+            ],
           },
-        ],
-      },
-    ]);
-    console.log("Response from OpenAI:", response);
+        ]);
+        console.log("Response from OpenAI:", response);
+        const parsedResponse = parseResponse(response!);
 
-    const parsedResponse = parseResponse(response!);
+        if (parsedResponse) {
+          const updatedCard = {
+            ...parsedResponse,
+            id: row.id,
+            imageUrl: imageUrl,
+          };
 
-    return NextResponse.json(parsedResponse, { status: 200 });
+          // Update the database with the new information
+          await updateCard(updatedCard);
+
+          return updatedCard;
+        }
+        return null;
+      }),
+    );
+
+    const validResults = results.filter(
+      (result): result is CardInfo => result !== null,
+    );
+
+    return NextResponse.json(validResults, { status: 200 });
   } catch (error) {
     console.error("Error during API call:", error);
     return NextResponse.json(

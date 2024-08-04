@@ -3,7 +3,7 @@ import type { Cards } from "./columns";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
 import { getMyCards } from "~/server/queries";
-import { Button } from "../../components/ui/button";
+
 async function getData(): Promise<Cards[]> {
   const getCards = await getMyCards();
   console.log(getCards);

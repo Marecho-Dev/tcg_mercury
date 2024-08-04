@@ -1,22 +1,16 @@
 "use client";
 import { Checkbox } from "../../components/ui/checkbox";
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { useSelectedRowsStore } from "~/store/cardStore";
 import {
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Cards } from "./columns";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import type { Cards } from "./columns";
 import { Button } from "../../components/ui/button";
+
 import {
   Table,
   TableBody,
@@ -31,11 +25,43 @@ interface DataTableProps<TData extends Cards, TValue> {
   data: TData[];
 }
 
+interface SelectedRow {
+  id: number;
+  // Add other properties that are relevant for your selected rows
+}
+
+interface AnalyzeCardRequest {
+  selectedRows: SelectedRow[];
+}
+
 export function DataTable<TData extends Cards, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
   const { selectedRows, setSelectedRows } = useSelectedRowsStore();
+
+  const handleAnalyzeCards = async () => {
+    try {
+      console.log("selected Rows:", selectedRows);
+      const response = await fetch("/api/analyzeCard", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ selectedRows }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const result = (await response.json()) as AnalyzeCardRequest;
+      console.log("Analysis result:", result);
+    } catch (error) {
+      console.error("Error analyzing cards:", error);
+    }
+  };
+
   useEffect(() => {
     console.log("Selected rows:", selectedRows);
   }, [selectedRows]);
@@ -62,6 +88,7 @@ export function DataTable<TData extends Cards, TValue>({
     enableHiding: false,
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const allColumns = useMemo(() => [selectionColumn, ...columns], [columns]);
   const table = useReactTable({
     data,
@@ -99,7 +126,9 @@ export function DataTable<TData extends Cards, TValue>({
   return (
     <div>
       <div className="flex justify-end pb-2">
-        <Button variant="outline">Analyze Cards</Button>
+        <Button variant="outline" onClick={handleAnalyzeCards}>
+          Analyze Cards
+        </Button>
       </div>
       <div className="rounded-md border">
         <Table>

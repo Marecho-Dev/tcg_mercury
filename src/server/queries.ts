@@ -4,6 +4,15 @@ import { auth } from "@clerk/nextjs/server";
 import { cards, images } from "./db/schema";
 import { inArray, eq } from "drizzle-orm";
 
+interface CardUpdateInfo {
+  id: number;
+  name: string;
+  set: string;
+  rarity: string;
+  condition: "NM" | "LP" | "MP" | "HP";
+  firstEdition: boolean;
+}
+
 export async function getMyImages() {
   const user = auth();
 
@@ -78,4 +87,42 @@ export async function getMyCards() {
     orderBy: (model, { desc }) => desc(model.id),
   });
   return cards;
+}
+
+export async function updateCard(cardInfo: CardUpdateInfo) {
+  const user = auth();
+
+  if (!user.userId) throw new Error("Unauthorized");
+
+  try {
+    const updatedCard = await db
+      .update(cards)
+      .set({
+        name: cardInfo.name,
+        set: cardInfo.set,
+        rarity: cardInfo.rarity,
+        condition: cardInfo.condition,
+        // edition: cardInfo.firstEdition,
+        // Add any other fields you want to update
+      })
+      .where(eq(cards.id, cardInfo.id))
+      .returning({
+        id: cards.id,
+        name: cards.name,
+        set: cards.set,
+        rarity: cards.rarity,
+        condition: cards.condition,
+        // edition: cards.firstEdition,
+        // Return any other fields you want to confirm
+      });
+
+    if (updatedCard.length === 0) {
+      throw new Error(`No card found with id ${cardInfo.id}`);
+    }
+
+    return updatedCard[0]; // Return the updated card details
+  } catch (error) {
+    console.error(`Error updating card with id ${cardInfo.id}:`, error);
+    throw error;
+  }
 }

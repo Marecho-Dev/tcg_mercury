@@ -11,6 +11,7 @@ export async function generateChatResponse(
   messages: ChatCompletionMessageParam[],
 ) {
   try {
+    console.log(messages);
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: messages,
@@ -22,9 +23,11 @@ export async function generateChatResponse(
     });
 
     const content = completion.choices[0]?.message?.content;
+    console.log(content);
     if (content === undefined) {
       throw new Error("No content returned from OpenAI");
     }
+    return content;
   } catch (error) {
     console.error("Error in OpenAI service:", error);
     throw new Error("Failed to fetch response from OpenAI.");
