@@ -16,9 +16,6 @@ export default async function InventoryPage() {
   console.log(data);
   return (
     <div className="container mx-auto py-10">
-      <div className="flex justify-end pb-2">
-        <Button variant="outline">Analyze Cards</Button>
-      </div>
       <DataTable columns={columns} data={data} />
     </div>
   );
