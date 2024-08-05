@@ -7,10 +7,13 @@ import { readAndCompressImage } from "browser-image-resizer";
 
 const resizeConfig = {
   quality: 0.7,
-  maxWidth: 800,
-  maxHeight: 600,
+  maxWidth: 1366,
+  maxHeight: 768,
+  width: 1366,
+  height: 768,
   autoRotate: true,
   debug: true,
+  mode: "cover",
 };
 
 interface CardDetails {
@@ -45,10 +48,15 @@ export function CardDumper() {
 
   const router = useRouter();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = event.target.files;
     if (files) {
-      setTempImages([...tempImages, ...Array.from(files)]);
+      const resizedFiles = await Promise.all(
+        Array.from(files).map((file) => resizeImage(file)),
+      );
+      setTempImages((prevImages) => [...prevImages, ...resizedFiles]);
     }
   };
 
