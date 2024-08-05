@@ -23,6 +23,7 @@ import {
 interface DataTableProps<TData extends Cards, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  refreshData: () => Promise<TData[]>;
 }
 
 interface SelectedRow {
@@ -38,27 +39,45 @@ export function DataTable<TData extends Cards, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const { selectedRows, setSelectedRows } = useSelectedRowsStore();
+  const { selectedRows, setSelectedRows, progress } = useSelectedRowsStore();
 
   const handleAnalyzeCards = async () => {
-    try {
-      console.log("selected Rows:", selectedRows);
-      const response = await fetch("/api/analyzeCard", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ selectedRows }),
-      });
+    const { setProgress } = useSelectedRowsStore.getState();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+    if (!selectedRows || selectedRows.length === 0) {
+      console.error("No rows selected for analysis");
+      return;
+    }
+
+    setProgress({ isAnalyzing: true, current: 0, total: selectedRows.length });
+    try {
+      for (let i = 0; i < selectedRows.length; i++) {
+        const row = selectedRows[i];
+        console.log("Analyzing row:", row);
+
+        const response = await fetch("/api/analyzeCard", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ selectedRow: row }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const result = (await response.json()) as AnalyzeCardRequest;
+        console.log("Analysis result for card:", result);
+
+        setProgress({ current: i + 1 });
       }
 
-      const result = (await response.json()) as AnalyzeCardRequest;
-      console.log("Analysis result:", result);
+      console.log("Analysis complete");
     } catch (error) {
       console.error("Error analyzing cards:", error);
+    } finally {
+      setProgress({ isAnalyzing: false });
     }
   };
 
@@ -126,9 +145,15 @@ export function DataTable<TData extends Cards, TValue>({
   return (
     <div>
       <div className="flex justify-end pb-2">
-        <Button variant="outline" onClick={handleAnalyzeCards}>
-          Analyze Cards
-        </Button>
+        {progress.isAnalyzing ? (
+          <Button variant="outline" disabled>
+            Analyzing: {progress.current}/{progress.total}
+          </Button>
+        ) : (
+          <Button variant="outline" onClick={handleAnalyzeCards}>
+            Analyze Cards
+          </Button>
+        )}
       </div>
       <div className="rounded-md border">
         <Table>

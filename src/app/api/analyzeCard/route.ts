@@ -25,7 +25,7 @@ interface SelectedRow {
 }
 
 interface AnalyzeCardRequest {
-  selectedRows: SelectedRow[];
+  selectedRow: SelectedRow;
 }
 export async function POST(_req: NextRequest, _res: NextResponse) {
   console.log("Handler start");
@@ -35,39 +35,33 @@ export async function POST(_req: NextRequest, _res: NextResponse) {
     console.log("Received data:", body);
 
     // Extract selectedRows from the body object
-    const { selectedRows } = body;
+    const { selectedRow } = body;
 
-    if (!Array.isArray(selectedRows)) {
-      console.error("selectedRows is not an array:", selectedRows);
+    if (!selectedRow || typeof selectedRow !== "object") {
+      console.error("Invalid selectedRow:", selectedRow);
       return NextResponse.json(
-        { error: "Invalid data format. Expected an array of selected rows." },
+        { error: "Invalid data format. Expected a single row object." },
         { status: 400 },
       );
     }
-    console.log(selectedRows);
+    console.log(selectedRow);
 
-    const results = await Promise.all(
-      selectedRows.map(async (row) => {
-        const imageUrl = row.picture1Url; // You can choose which picture to use
-        // const imageUrl =
-        //   "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madisonthe-nature-boardwalk.jpg";
-        // const imageUrl =
-        //   "https://utfs.io/f/d699cdaa-2a30-4e4a-8545-26b228cdd22b-lmien9.jpg";
+    const imageUrl = selectedRow.picture1Url;
 
-        const response = await generateChatResponse([
+    const response = await generateChatResponse([
+      {
+        role: "user",
+        content: [
           {
-            role: "user",
-            content: [
-              {
-                type: "image_url",
-                image_url: {
-                  url: imageUrl,
-                  detail: "high",
-                },
-              },
-              {
-                type: "text",
-                text: `Analyze this Yu-Gi-Oh card image and provide the following information in a valid JSON format:
+            type: "image_url",
+            image_url: {
+              url: imageUrl,
+              detail: "high",
+            },
+          },
+          {
+            type: "text",
+            text: `Analyze this Yu-Gi-Oh card image and provide the following information in a valid JSON format:
 
 {
   "name": "",
@@ -78,45 +72,42 @@ export async function POST(_req: NextRequest, _res: NextResponse) {
 }
 
 Please note:
-1. For name, set, and rarity, be careful to distinguish between similar-looking characters (like I and L). Use your best judgment to correct any text that might be unclear due to surface damage.
+1. For name, set(set will be set name followed by - and then followed by card number in that set), and rarity, be careful to distinguish between similar-looking characters (like I and L). Use your best judgment to correct any text that might be unclear due to surface damage.
 2. For condition, use only these categories: "NM" (Near Mint), "LP" (Lightly Played), "MP" (Moderately Played), or "HP" (Heavily Played).
 3. For firstEdition, use a boolean value (true or false).
 
 Ensure the JSON is properly formatted and can be parsed by JavaScript's JSON.parse() function.`,
-              },
-            ],
           },
-        ]);
-        console.log("Response from OpenAI:", response);
-        const parsedResponse = parseResponse(response!);
+        ],
+      },
+    ]);
 
-        if (parsedResponse) {
-          const updatedCard = {
-            ...parsedResponse,
-            id: row.id,
-            imageUrl: imageUrl,
-          };
+    console.log("Response from OpenAI:", response);
+    const parsedResponse = parseResponse(response!);
 
-          // Update the database with the new information
-          await updateCard(updatedCard);
+    if (parsedResponse) {
+      const updatedCard = {
+        ...parsedResponse,
+        id: selectedRow.id,
+        imageUrl: imageUrl,
+      };
 
-          return updatedCard;
-        }
-        return null;
-      }),
+      // Update the database with the new information
+      await updateCard(updatedCard);
+
+      return NextResponse.json(updatedCard, { status: 200 });
+    }
+
+    return NextResponse.json(
+      { error: "Failed to parse response" },
+      { status: 500 },
     );
-
-    const validResults = results.filter(
-      (result): result is CardInfo => result !== null,
-    );
-
-    return NextResponse.json(validResults, { status: 200 });
   } catch (error) {
     console.error("Error during API call:", error);
     return NextResponse.json(
       { error: "Failed to fetch response from OpenAI." },
       { status: 500 },
-    ); // Error response
+    );
   }
 }
 

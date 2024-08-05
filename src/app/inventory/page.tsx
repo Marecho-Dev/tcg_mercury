@@ -11,12 +11,22 @@ async function getData(): Promise<Cards[]> {
 }
 
 export default async function InventoryPage() {
-  const data = await getData();
+  const initialData = await getData();
 
-  console.log(data);
+  console.log(initialData);
+
+  async function refreshData() {
+    "use server";
+    return getData();
+  }
+
   return (
     <div className="container mx-auto py-10">
-      <DataTable columns={columns} data={data} />
+      <DataTable
+        columns={columns}
+        data={initialData}
+        refreshData={refreshData}
+      />
     </div>
   );
 }

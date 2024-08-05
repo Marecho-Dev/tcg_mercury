@@ -3,12 +3,31 @@ import React, { useState, useRef, useEffect } from "react";
 import { uploadFiles } from "../../utils/uploadthing";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { readAndCompressImage } from "browser-image-resizer";
+
+const resizeConfig = {
+  quality: 0.7,
+  maxWidth: 800,
+  maxHeight: 600,
+  autoRotate: true,
+  debug: true,
+};
 
 interface CardDetails {
   id: number;
   // Add other expected properties here
   url?: string; // Using optional if not all cards have a URL
   status?: string; // Optional if not all cards have a status
+}
+
+async function resizeImage(file: File): Promise<File> {
+  try {
+    const resizedBlob = await readAndCompressImage(file, resizeConfig);
+    return new File([resizedBlob], file.name, { type: resizedBlob.type });
+  } catch (error) {
+    console.error("Error resizing image:", error);
+    return file; // Return original file if resizing fails
+  }
 }
 
 export function CardDumper() {
@@ -50,7 +69,7 @@ export function CardDumper() {
       });
 
       if (!createdCardResponse.ok) {
-        throw new Error(`HTTP error! Status: ${createdCardResponse.status}`);
+        throw new Error(`HTTP error!1 Status: ${createdCardResponse.status}`);
       }
 
       const data = (await createdCardResponse.json()) as CardDetails[];
@@ -93,7 +112,7 @@ export function CardDumper() {
       });
 
       if (!createdCardResponse.ok) {
-        throw new Error(`HTTP error! Status: ${updateImageResponse.status}`);
+        throw new Error(`HTTP error!2 Status: ${updateImageResponse.status}`);
       }
 
       // if (!updateSuccess) {
@@ -117,7 +136,7 @@ export function CardDumper() {
       });
 
       if (!createdCardResponse.ok) {
-        throw new Error(`HTTP error! Status: ${updateImageResponse.status}`);
+        throw new Error(`HTTP error!3 Status: ${updateImageResponse.status}`);
       }
 
       console.log("updatedCardImages");
