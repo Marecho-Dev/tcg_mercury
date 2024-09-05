@@ -4,9 +4,26 @@ import { uploadFiles } from "../../utils/uploadthing";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { readAndCompressImage } from "browser-image-resizer";
+// import { Button } from "../../components/ui/button";
+// import {
+//   Card,
+//   CardContent,
+//   CardDescription,
+//   CardFooter,
+//   CardHeader,
+//   CardTitle,
+// } from "../../components/ui/card";
+// import { Input } from "../../components/ui/input";
+// import { Label } from "../../components/ui/label";
+// import {
+//   Tabs,
+//   TabsContent,
+//   TabsList,
+//   TabsTrigger,
+// } from "../../components/ui/tabs";
 
 const resizeConfig = {
-  quality: 0.7,
+  quality: 1.0,
   maxWidth: 1366,
   maxHeight: 768,
   width: 1366,
@@ -41,7 +58,6 @@ export function CardDumper() {
 
   useEffect(() => {
     if (cardData) {
-      console.log("Updated cardData:", cardData);
       // Perform any other actions that depend on the updated cardData value
     }
   }, [cardData]);
@@ -81,12 +97,6 @@ export function CardDumper() {
       }
 
       const data = (await createdCardResponse.json()) as CardDetails[];
-      console.log(data);
-      setCardData(data[0]!.id);
-      console.log("testing");
-      console.log(createdCardResponse);
-      console.log("calling CardId");
-      console.log(cardData);
 
       // Upload the images associated with the created card
       const res = await uploadFiles("imageUploader", {
@@ -101,12 +111,6 @@ export function CardDumper() {
       const updatedImageUrls = res
         .map((item) => item.serverData.pictureUrl) // Access the pictureUrl from each item
         .filter((url): url is string => url !== null && url !== undefined); // Filter out null or undefined URLs
-
-      console.log("whatever this is");
-      console.log(updatedImageIds);
-      console.log(updatedImageUrls);
-      // console.log(data[0].id);
-      console.log("end whathever this is");
 
       const updateImageResponse = await fetch("/api/updateImage", {
         method: "POST",
@@ -127,9 +131,6 @@ export function CardDumper() {
       //   throw new Error("Failed to update images with cardId");
       // }
       //updatedImageIds contains the updatedImagesIds [37, 38] you can make it so a new updateCardImages calls for
-      console.log("updateImageResponse");
-      console.log(updateImageResponse);
-      console.log("--------------------------");
 
       const updateCardImages = await fetch("/api/updateCardImages", {
         method: "POST",
@@ -147,16 +148,11 @@ export function CardDumper() {
         throw new Error(`HTTP error!3 Status: ${updateImageResponse.status}`);
       }
 
-      console.log("updatedCardImages");
-      console.log(updateCardImages);
-      console.log("--------------------------");
-
       setTempImages([]);
       setIsUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-      console.log(res);
       router.refresh();
     } catch (error) {
       setIsUploading(false);
@@ -169,46 +165,97 @@ export function CardDumper() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-5">
-      <input
-        type="file"
-        multiple
-        onChange={handleFileChange}
-        ref={fileInputRef}
-      />
-      {tempImages.length > 0 && (
-        <div className="mt-4 flex flex-row items-center justify-center gap-4">
-          {tempImages.map((file, index) => (
-            <div key={index} className="overflow-hidden rounded-lg shadow-lg">
-              <h3 className="bg-gray-800 p-2 text-center text-lg font-bold text-white">
-                Image {index + 1}
-              </h3>
-              <Image
-                src={URL.createObjectURL(file)}
-                style={{ objectFit: "contain" }}
-                width={192}
-                height={192}
-                alt={file.name}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-      {tempImages.length > 0 && (
-        <div className="mt-4 flex justify-center">
-          <button
-            className={`rounded-lg px-4 py-2 font-semibold text-white ${
-              isUploading
-                ? "cursor-not-allowed bg-gray-500"
-                : "bg-blue-500 hover:bg-blue-600"
-            }`}
-            onClick={handleConfirmUpload}
-            disabled={isUploading}
-          >
-            {isUploading ? "Uploading..." : "Confirm Upload"}
-          </button>
-        </div>
-      )}
+    <div>
+      <div className="flex flex-col items-center justify-center p-5">
+        {/* <Tabs defaultValue="account" className="w-[400px]">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="account">Front</TabsTrigger>
+            <TabsTrigger value="password">Back</TabsTrigger>
+          </TabsList>
+          <TabsContent value="account">
+            <Card>
+              <CardHeader>
+                <CardTitle>Account</CardTitle>
+                <CardDescription>
+                  Make changes to your account here. Click save when you're
+                  done.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="space-y-1">
+                  <Label htmlFor="name">Name</Label>
+                  <Input id="name" defaultValue="Pedro Duarte" />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="username">Username</Label>
+                  <Input id="username" defaultValue="@peduarte" />
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button>Save changes</Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          <TabsContent value="password">
+            <Card>
+              <CardHeader>
+                <CardTitle>Password</CardTitle>
+                <CardDescription>
+                  Change your password here. After saving, you'll be logged out.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="space-y-1">
+                  <Label htmlFor="current">Current password</Label>
+                  <Input id="current" type="password" />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="new">New password</Label>
+                  <Input id="new" type="password" />
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button>Save password</Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        </Tabs> */}
+        <input
+          type="file"
+          multiple
+          onChange={handleFileChange}
+          ref={fileInputRef}
+        />
+        {tempImages.length > 0 && (
+          <div className="mt-4 flex flex-row items-center justify-center gap-4">
+            {tempImages.map((file, index) => (
+              <div key={index} className="overflow-hidden rounded-lg shadow-lg">
+                <h3 className="bg-gray-800 p-2 text-center text-lg font-bold text-white">
+                  Image {index + 1}
+                </h3>
+                <Image
+                  src={URL.createObjectURL(file)}
+                  style={{ objectFit: "contain" }}
+                  width={192}
+                  height={192}
+                  alt={file.name}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+        {tempImages.length > 0 && (
+          <div className="mt-4 flex justify-center">
+            <button
+              className={`text-whiteS rounded-lg px-4 py-2  font-semibold hover:bg-blue-600`}
+              onClick={handleConfirmUpload}
+              disabled={isUploading}
+            >
+              Confirm Upload
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

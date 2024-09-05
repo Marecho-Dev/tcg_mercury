@@ -9,7 +9,7 @@ interface CardUpdateInfo {
   name: string;
   set: string;
   rarity: string;
-  condition: "NM" | "LP" | "MP" | "HP";
+  condition: "NM" | "LP" | "MP" | "HP" | "D";
   firstEdition: boolean;
 }
 

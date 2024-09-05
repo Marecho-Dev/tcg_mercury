@@ -10,7 +10,7 @@ interface CardInfo {
   name: string;
   set: string;
   rarity: string;
-  condition: "NM" | "LP" | "MP" | "HP";
+  condition: "NM" | "LP" | "MP" | "HP" | "D";
   firstEdition: boolean;
   imageUrl: string;
 }
@@ -73,7 +73,7 @@ export async function POST(_req: NextRequest, _res: NextResponse) {
 
 Please note:
 1. For name, set(set will be set name followed by - and then followed by card number in that set), and rarity, be careful to distinguish between similar-looking characters (like I and L). Use your best judgment to correct any text that might be unclear due to surface damage.
-2. For condition, use only these categories: "NM" (Near Mint), "LP" (Lightly Played), "MP" (Moderately Played), or "HP" (Heavily Played).
+2. For condition, use only these categories: "NM" (Near Mint), "LP" (Lightly Played), "MP" (Moderately Played), "D" (Damaged), or "HP" (Heavily Played).
 3. For firstEdition, use a boolean value (true or false).
 
 Ensure the JSON is properly formatted and can be parsed by JavaScript's JSON.parse() function.`,
