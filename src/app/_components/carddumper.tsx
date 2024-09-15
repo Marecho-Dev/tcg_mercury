@@ -145,7 +145,6 @@ export function CardDumper() {
         multiple
         onChange={handleFileChange}
         ref={fileInputRef}
-        accept="image/*"
         max={2}
       />
       {selectedImages.length > 0 && (
