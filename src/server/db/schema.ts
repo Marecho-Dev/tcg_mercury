@@ -40,7 +40,7 @@ export const cards = createTable(
     rarity: varchar("rarity", { length: 256 }),
     condition: varchar("condition", { length: 256 }),
     set: varchar("set", { length: 256 }),
-    edition: varchar("edition", { length: 256 }),
+    firstEdition: boolean("edition").default(false),
     ebayPrice: doublePrecision("ebayPrice"),
     tcgPlayerPrice: doublePrecision("tcgPlayerPrice"),
     userId: varchar("userId", { length: 256 }).notNull(),

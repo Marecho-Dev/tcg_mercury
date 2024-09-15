@@ -11,7 +11,7 @@ export type Cards = {
   rarity: string | null; // Allow null
   condition: string | null; // Allow null
   set: string | null; // Allow null
-  edition: string | null; // Allow null
+  firstEdition: boolean | null; // Allow null
   ebayPrice: number | null; // Allow null
   tcgPlayerPrice: number | null; // Allow null
   userId: string; // Assuming userId should always be a string and not null

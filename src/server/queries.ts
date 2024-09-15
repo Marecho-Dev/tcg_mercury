@@ -102,7 +102,7 @@ export async function updateCard(cardInfo: CardUpdateInfo) {
         set: cardInfo.set,
         rarity: cardInfo.rarity,
         condition: cardInfo.condition,
-        // edition: cardInfo.firstEdition,
+        firstEdition: cardInfo.firstEdition,
         // Add any other fields you want to update
       })
       .where(eq(cards.id, cardInfo.id))
@@ -112,7 +112,7 @@ export async function updateCard(cardInfo: CardUpdateInfo) {
         set: cards.set,
         rarity: cards.rarity,
         condition: cards.condition,
-        // edition: cards.firstEdition,
+        firstEdition: cards.firstEdition,
         // Return any other fields you want to confirm
       });
 
