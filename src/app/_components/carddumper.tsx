@@ -1,43 +1,25 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { uploadFiles } from "../../utils/uploadthing";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { readAndCompressImage } from "browser-image-resizer";
-// import { Button } from "../../components/ui/button";
-// import {
-//   Card,
-//   CardContent,
-//   CardDescription,
-//   CardFooter,
-//   CardHeader,
-//   CardTitle,
-// } from "../../components/ui/card";
-// import { Input } from "../../components/ui/input";
-// import { Label } from "../../components/ui/label";
-// import {
-//   Tabs,
-//   TabsContent,
-//   TabsList,
-//   TabsTrigger,
-// } from "../../components/ui/tabs";
 
 const resizeConfig = {
-  quality: 1.0,
+  quality: 0.7,
   maxWidth: 1366,
   maxHeight: 768,
   width: 1366,
   height: 768,
   autoRotate: true,
   debug: true,
-  mode: "cover",
+  mode: "cover" as const,
 };
 
 interface CardDetails {
   id: number;
-  // Add other expected properties here
-  url?: string; // Using optional if not all cards have a URL
-  status?: string; // Optional if not all cards have a status
+  url?: string;
+  status?: string;
 }
 
 async function resizeImage(file: File): Promise<File> {
@@ -46,216 +28,163 @@ async function resizeImage(file: File): Promise<File> {
     return new File([resizedBlob], file.name, { type: resizedBlob.type });
   } catch (error) {
     console.error("Error resizing image:", error);
-    return file; // Return original file if resizing fails
+    return file;
   }
 }
 
 export function CardDumper() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [tempImages, setTempImages] = useState<File[]>([]);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [uploadQueue, setUploadQueue] = useState<File[][]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [cardData, setCardData] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (cardData) {
-      // Perform any other actions that depend on the updated cardData value
-    }
-  }, [cardData]);
 
   const router = useRouter();
 
+  const uploadImages = useCallback(
+    async (images: File[]) => {
+      try {
+        const createdCardResponse = await fetch("/api/createCard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!createdCardResponse.ok) {
+          throw new Error(`HTTP error! Status: ${createdCardResponse.status}`);
+        }
+
+        const data = (await createdCardResponse.json()) as CardDetails[];
+        const cardId = data[0]?.id;
+
+        if (!cardId) {
+          throw new Error("Failed to get card ID");
+        }
+
+        const res = await uploadFiles("imageUploader", { files: images });
+
+        const updatedImageIds = res
+          .map((item) => item.serverData.pictureId)
+          .filter((id): id is number => id !== null);
+        const updatedImageUrls = res
+          .map((item) => item.serverData.pictureUrl)
+          .filter((url): url is string => url !== null && url !== undefined);
+
+        await fetch("/api/updateImage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageIds: updatedImageIds, cardId }),
+        });
+
+        await fetch("/api/updateCardImages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cardId,
+            picture1Url: updatedImageUrls[0],
+            picture2Url: updatedImageUrls[1],
+          }),
+        });
+
+        router.refresh();
+      } catch (error) {
+        console.error("Upload failed:", error);
+        throw error;
+      }
+    },
+    [router],
+  );
+
+  useEffect(() => {
+    const processUploadQueue = async () => {
+      if (uploadQueue.length > 0 && !isUploading) {
+        setIsUploading(true);
+        const currentUpload = uploadQueue[0];
+
+        if (currentUpload) {
+          try {
+            await uploadImages(currentUpload);
+            setUploadQueue((prevQueue) => prevQueue.slice(1));
+          } catch (error) {
+            console.error("Upload failed:", error);
+          }
+        }
+
+        setIsUploading(false);
+      }
+    };
+
+    void processUploadQueue();
+  }, [uploadQueue, isUploading, uploadImages]);
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = event.target.files;
     if (files) {
       const resizedFiles = await Promise.all(
-        Array.from(files).map((file) => resizeImage(file)),
+        Array.from(files)
+          .slice(0, 2)
+          .map((file) => resizeImage(file)),
       );
-      setTempImages((prevImages) => [...prevImages, ...resizedFiles]);
+      setSelectedImages(resizedFiles);
     }
   };
 
-  const handleConfirmUpload = async () => {
-    setIsUploading(true);
-
-    try {
-      // Create the card first
-      console.log(
-        "Requesting URL:",
-        window.location.origin + "/api/createCard",
-      );
-      const createdCardResponse = await fetch("/api/createCard", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json", // Ensure correct content type
-        },
-      });
-
-      if (!createdCardResponse.ok) {
-        throw new Error(`HTTP error!1 Status: ${createdCardResponse.status}`);
-      }
-
-      const data = (await createdCardResponse.json()) as CardDetails[];
-
-      // Upload the images associated with the created card
-      const res = await uploadFiles("imageUploader", {
-        files: tempImages,
-        // input: { cardId }, // Pass the cardId as input data to the uploadFiles function
-      });
-      console.log("upload files finished calling");
-      console.log(res);
-      const updatedImageIds = res
-        .map((item) => item.serverData.pictureId)
-        .filter((id): id is number => id !== null); // Filter out null values
-      const updatedImageUrls = res
-        .map((item) => item.serverData.pictureUrl) // Access the pictureUrl from each item
-        .filter((url): url is string => url !== null && url !== undefined); // Filter out null or undefined URLs
-
-      const updateImageResponse = await fetch("/api/updateImage", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json", // Ensure correct content type
-        },
-        body: JSON.stringify({
-          imageIds: updatedImageIds,
-          cardId: data[0]!.id,
-        }),
-      });
-
-      if (!createdCardResponse.ok) {
-        throw new Error(`HTTP error!2 Status: ${updateImageResponse.status}`);
-      }
-
-      // if (!updateSuccess) {
-      //   throw new Error("Failed to update images with cardId");
-      // }
-      //updatedImageIds contains the updatedImagesIds [37, 38] you can make it so a new updateCardImages calls for
-
-      const updateCardImages = await fetch("/api/updateCardImages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json", // Ensure correct content type
-        },
-        body: JSON.stringify({
-          cardId: data[0]!.id,
-          picture1Url: updatedImageUrls[0],
-          picture2Url: updatedImageUrls[1],
-        }),
-      });
-
-      if (!createdCardResponse.ok) {
-        throw new Error(`HTTP error!3 Status: ${updateImageResponse.status}`);
-      }
-
-      setTempImages([]);
-      setIsUploading(false);
+  const handleConfirmUpload = () => {
+    if (selectedImages.length === 2) {
+      setUploadQueue((prevQueue) => [...prevQueue, selectedImages]);
+      setSelectedImages([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
-      }
-      router.refresh();
-    } catch (error) {
-      setIsUploading(false);
-      if (error instanceof Error) {
-        alert(`ERROR! ${error.message}`);
-      } else {
-        alert("An unknown error occurred.");
       }
     }
   };
 
   return (
-    <div>
-      <div className="flex flex-col items-center justify-center p-5">
-        {/* <Tabs defaultValue="account" className="w-[400px]">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="account">Front</TabsTrigger>
-            <TabsTrigger value="password">Back</TabsTrigger>
-          </TabsList>
-          <TabsContent value="account">
-            <Card>
-              <CardHeader>
-                <CardTitle>Account</CardTitle>
-                <CardDescription>
-                  Make changes to your account here. Click save when you're
-                  done.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="space-y-1">
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" defaultValue="Pedro Duarte" />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="username">Username</Label>
-                  <Input id="username" defaultValue="@peduarte" />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button>Save changes</Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-          <TabsContent value="password">
-            <Card>
-              <CardHeader>
-                <CardTitle>Password</CardTitle>
-                <CardDescription>
-                  Change your password here. After saving, you'll be logged out.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="space-y-1">
-                  <Label htmlFor="current">Current password</Label>
-                  <Input id="current" type="password" />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="new">New password</Label>
-                  <Input id="new" type="password" />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button>Save password</Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-        </Tabs> */}
-        <input
-          type="file"
-          multiple
-          onChange={handleFileChange}
-          ref={fileInputRef}
-        />
-        {tempImages.length > 0 && (
-          <div className="mt-4 flex flex-row items-center justify-center gap-4">
-            {tempImages.map((file, index) => (
-              <div key={index} className="overflow-hidden rounded-lg shadow-lg">
-                <h3 className="bg-gray-800 p-2 text-center text-lg font-bold text-white">
-                  Image {index + 1}
-                </h3>
-                <Image
-                  src={URL.createObjectURL(file)}
-                  style={{ objectFit: "contain" }}
-                  width={192}
-                  height={192}
-                  alt={file.name}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-        {tempImages.length > 0 && (
-          <div className="mt-4 flex justify-center">
-            <button
-              className={`text-whiteS rounded-lg px-4 py-2  font-semibold hover:bg-blue-600`}
-              onClick={handleConfirmUpload}
-              disabled={isUploading}
-            >
-              Confirm Upload
-            </button>
-          </div>
-        )}
+    <div className="flex flex-col items-center justify-center p-5">
+      <input
+        type="file"
+        multiple
+        onChange={handleFileChange}
+        ref={fileInputRef}
+        accept="image/*"
+        max={2}
+      />
+      {selectedImages.length > 0 && (
+        <div className="mt-4 flex flex-row items-center justify-center gap-4">
+          {selectedImages.map((file, index) => (
+            <div key={index} className="overflow-hidden rounded-lg shadow-lg">
+              <h3 className="bg-gray-800 p-2 text-center text-lg font-bold text-white">
+                Image {index + 1}
+              </h3>
+              <Image
+                src={URL.createObjectURL(file)}
+                style={{ objectFit: "contain" }}
+                width={192}
+                height={192}
+                alt={file.name}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="mt-4 flex justify-center">
+        <button
+          className={`rounded-lg px-4 py-2 font-semibold text-white ${
+            selectedImages.length === 2
+              ? "bg-blue-500 hover:bg-blue-600"
+              : "cursor-not-allowed bg-gray-500"
+          }`}
+          onClick={handleConfirmUpload}
+          disabled={selectedImages.length !== 2}
+        >
+          Confirm Upload
+        </button>
       </div>
+      {uploadQueue.length > 0 && (
+        <div className="mt-4 text-center">
+          <p>{`Uploads in queue: ${uploadQueue.length}`}</p>
+          {isUploading && <p>Uploading...</p>}
+        </div>
+      )}
     </div>
   );
 }

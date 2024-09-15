@@ -7,6 +7,7 @@ import {
   varchar,
   doublePrecision,
   integer,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const createTable = pgTableCreator((name) => `tcg_mercury_${name}`);
@@ -50,5 +51,26 @@ export const cards = createTable(
   },
   (card) => ({
     nameIndex: index("name_idx").on(card.name),
+  }),
+);
+
+export const products = createTable(
+  "product",
+  {
+    id: serial("id").primaryKey(),
+    groupId: integer("groupId").notNull(),
+    name: varchar("name", { length: 256 }).notNull(),
+    abbreviation: varchar("abbreviation", { length: 10 }),
+    isSupplemental: boolean("isSupplemental").notNull().default(false),
+    publishedOn: timestamp("publishedOn", { withTimezone: true }),
+    modifiedOn: timestamp("modifiedOn", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    categoryId: integer("categoryId").notNull(),
+  },
+  (product) => ({
+    nameIndex: index("name_idx").on(product.name),
+    groupIdIndex: index("groupId_idx").on(product.groupId),
+    publishedOnIndex: index("publishedOn_idx").on(product.publishedOn),
   }),
 );
