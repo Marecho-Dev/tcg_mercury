@@ -46,7 +46,8 @@ export const columns: ColumnDef<Cards>[] = [
     header: "Set",
   },
   {
-    accessorKey: "edition",
-    header: "Edition",
+    accessorKey: "firstEdition", // Changed from "edition" to "firstEdition" to match the type
+    header: "First Edition",
+    cell: ({ row }) => (row.getValue("firstEdition") ? "Yes" : "No"), // Custom cell renderer for boolean value
   },
 ];
