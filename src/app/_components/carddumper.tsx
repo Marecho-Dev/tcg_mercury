@@ -119,12 +119,13 @@ export function CardDumper() {
   ) => {
     const files = event.target.files;
     if (files) {
+      const newFiles = Array.from(files).slice(0, 2 - selectedImages.length);
       const resizedFiles = await Promise.all(
-        Array.from(files)
-          .slice(0, 2)
-          .map((file) => resizeImage(file)),
+        newFiles.map((file) => resizeImage(file)),
       );
-      setSelectedImages(resizedFiles);
+      setSelectedImages((prevImages) =>
+        [...prevImages, ...resizedFiles].slice(0, 2),
+      );
     }
   };
 
