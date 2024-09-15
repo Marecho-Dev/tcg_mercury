@@ -48,9 +48,9 @@ export const columns: ColumnDef<Cards>[] = [
   {
     accessorKey: "firstEdition", // Changed from "edition" to "firstEdition" to match the type
     header: "First Edition",
-    cell: ({ row }) => {
-      const firstEdition = row.getValue("firstEdition");
-      return firstEdition === true ? "1st" : "Unl";
-    },
+    // cell: ({ row }) => {
+    //   const firstEdition = row.getValue("firstEdition");
+    //   return firstEdition ? "1st" : "Unl";
+    // },
   },
 ];
