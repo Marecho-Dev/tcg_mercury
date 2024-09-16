@@ -2,11 +2,13 @@ import React from "react";
 import type { Cards } from "./columns";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
-import { getMyCards } from "~/server/queries";
+import { getTCGCardPriceView } from "~/server/queries";
 
 async function getData(): Promise<Cards[]> {
-  const getCards = await getMyCards();
+  const getCards = await getTCGCardPriceView();
+  console.log("------------------------------------------");
   console.log(getCards);
+  console.log("------------------------------------------");
   return getCards;
 }
 

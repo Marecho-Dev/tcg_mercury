@@ -3,7 +3,7 @@
 import type { NextRequest } from "next/server";
 import { generateChatResponse } from "../../../server/gptquery";
 import { NextResponse } from "next/server";
-import { updateCard } from "~/server/queries";
+import { updateCard, searchTCGPlayerCards } from "~/server/queries";
 
 interface CardInfo {
   id: number;
@@ -13,6 +13,8 @@ interface CardInfo {
   condition: "NM" | "LP" | "MP" | "HP" | "D";
   firstEdition: boolean;
   imageUrl: string;
+  productId: number | null;
+  matchStatus: "found" | "multiple" | "not_found";
 }
 
 interface SelectedRow {
@@ -74,7 +76,8 @@ export async function POST(_req: NextRequest, _res: NextResponse) {
 Please note:
 1. For name, set(set will be set name followed by - and then followed by card number in that set), and rarity, be careful to distinguish between similar-looking characters (like I and L). Use your best judgment to correct any text that might be unclear due to surface damage.
 2. For condition, use only these categories: "NM" (Near Mint), "LP" (Lightly Played), "MP" (Moderately Played), "D" (Damaged), or "HP" (Heavily Played).
-3. For firstEdition, use a boolean value (true or false).
+3. For firstEdition, use a boolean value (true or false). If you don't see 1st Edition anywhere on the card, mark this as false!.
+4. For Rarity, if the letters are white, it is COMMON.
 
 Ensure the JSON is properly formatted and can be parsed by JavaScript's JSON.parse() function.`,
           },
@@ -86,11 +89,39 @@ Ensure the JSON is properly formatted and can be parsed by JavaScript's JSON.par
     const parsedResponse = parseResponse(response!);
 
     if (parsedResponse) {
-      const updatedCard = {
+      const updatedCard: CardInfo = {
         ...parsedResponse,
         id: selectedRow.id,
         imageUrl: imageUrl,
+        productId: null,
+        matchStatus: "not_found",
       };
+
+      // Extract the card number from the set
+
+      console.log(updatedCard.set);
+      // Update the database with the new information
+      if (updatedCard.set) {
+        // Search for the card in tcgPlayerCards
+        const matchingCards = await searchTCGPlayerCards(updatedCard.set);
+
+        if (matchingCards.length === 1) {
+          // Exact match found
+          updatedCard.productId = matchingCards[0]?.productId ?? null;
+          updatedCard.matchStatus = "found";
+        } else if (matchingCards.length > 1) {
+          // Multiple matches found
+          updatedCard.productId = null;
+          updatedCard.matchStatus = "multiple";
+        } else {
+          // No matches found
+          updatedCard.productId = null;
+          updatedCard.matchStatus = "not_found";
+        }
+      } else {
+        updatedCard.productId = null;
+        updatedCard.matchStatus = "not_found";
+      }
 
       // Update the database with the new information
       await updateCard(updatedCard);
@@ -111,13 +142,14 @@ Ensure the JSON is properly formatted and can be parsed by JavaScript's JSON.par
   }
 }
 
-function parseResponse(response: string | undefined): CardInfo | null {
+function parseResponse(
+  response: string | undefined,
+): Omit<CardInfo, "id" | "imageUrl" | "productId" | "matchStatus"> | null {
   if (!response) {
     return null;
   }
 
   try {
-    // Find the JSON object in the response
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const jsonString = jsonMatch[0];
