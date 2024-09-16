@@ -1,6 +1,8 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 // import { IntegerConfig } from "drizzle-orm/sqlite-core";
 
 export type Cards = {
@@ -22,15 +24,74 @@ export type Cards = {
   marketPrice: number | null;
 };
 
+const ImagePreview: React.FC<{ src: string | null }> = ({ src }) => {
+  const [showPreview, setShowPreview] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        previewRef.current &&
+        !previewRef.current.contains(event.target as Node)
+      ) {
+        setShowPreview(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  if (!src) return <span>No image</span>;
+
+  return (
+    <div className="relative flex h-full items-center justify-center">
+      <div className="relative h-[50px] w-[50px]">
+        <Image
+          src={src}
+          alt="Card thumbnail"
+          layout="fill"
+          objectFit="contain"
+          className="cursor-pointer"
+          onClick={() => setShowPreview(!showPreview)}
+        />
+      </div>
+      {showPreview && (
+        <div
+          ref={previewRef}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={() => setShowPreview(false)}
+        >
+          <div className="max-h-3xl relative max-w-3xl">
+            <Image
+              src={src}
+              alt="Card preview"
+              layout="intrinsic"
+              width={600}
+              height={600}
+              objectFit="contain"
+              className="transform rounded-lg shadow-2xl transition-transform duration-300 ease-in-out hover:scale-105"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const columns: ColumnDef<Cards>[] = [
   { accessorKey: "id", header: "Id" },
   {
     accessorKey: "picture1Url",
     header: "Front Picture Url",
+    cell: ({ row }) => <ImagePreview src={row.getValue("picture1Url")} />,
   },
   {
     accessorKey: "picture2Url",
     header: "Back Picture Url",
+    cell: ({ row }) => <ImagePreview src={row.getValue("picture2Url")} />,
   },
   {
     accessorKey: "name",
