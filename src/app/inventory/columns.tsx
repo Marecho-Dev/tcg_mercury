@@ -49,12 +49,10 @@ const ImagePreview: React.FC<{ src: string | null }> = ({ src }) => {
   return (
     <div className="relative flex h-full items-center justify-center">
       <div className="relative h-[50px] w-[50px]">
-        <Image
+        <img
           src={src}
           alt="Card thumbnail"
-          layout="fill"
-          objectFit="contain"
-          className="cursor-pointer"
+          className="h-full w-full cursor-pointer object-contain"
           onClick={() => setShowPreview(!showPreview)}
         />
       </div>
@@ -65,14 +63,10 @@ const ImagePreview: React.FC<{ src: string | null }> = ({ src }) => {
           onClick={() => setShowPreview(false)}
         >
           <div className="max-h-3xl relative max-w-3xl">
-            <Image
+            <img
               src={src}
               alt="Card preview"
-              layout="intrinsic"
-              width={600}
-              height={600}
-              objectFit="contain"
-              className="transform rounded-lg shadow-2xl transition-transform duration-300 ease-in-out hover:scale-105"
+              className="max-h-full max-w-full rounded-lg object-contain shadow-2xl transition-transform duration-300 ease-in-out hover:scale-105"
             />
           </div>
         </div>
