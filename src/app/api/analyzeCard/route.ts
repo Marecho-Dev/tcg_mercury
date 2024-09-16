@@ -74,7 +74,7 @@ export async function POST(_req: NextRequest, _res: NextResponse) {
 }
 
 Please note:
-1. For name, set(set will be set name followed by - and then followed by card number in that set), and rarity, be careful to distinguish between similar-looking characters (like I and L). Use your best judgment to correct any text that might be unclear due to surface damage.
+1. For name, set(set will be set name followed by - and then followed by card number in that set), and rarity, be careful to distinguish between similar-looking characters (like I and L). Use your best judgment to correct any text that might be unclear due to surface damage. Also, trim it, there should be no spaces in the set name.
 2. For condition, use only these categories: "NM" (Near Mint), "LP" (Lightly Played), "MP" (Moderately Played), "D" (Damaged), or "HP" (Heavily Played).
 3. For firstEdition, use a boolean value (true or false). If you don't see 1st Edition anywhere on the card, mark this as false!.
 4. For Rarity, if the letters are white, it is COMMON.
